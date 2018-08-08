@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>three.js css3d - periodic table</title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+	<script src="js/three.min.js"></script>
+	<script src="js/tween.min.js"></script>
+
+	// each target star has a star and one or more planets that orbit around them
+
+	// all stars have their name labelled with them, oriented so that you can see the name
+
+	// Each target star is stored as a LevelOfDetail (LOD) object that at big distances
+	// has an octahedron, mid distance has a sphere for the star and sphere for the planet
+	// close up has a detailed star and detailed planet in orbit around it
+
+	// you are in orbit around a CurrentStar identified by a unique code (probably the name)
+
+	// when you stare at a specific star, after 5 seconds you teleport to that star
+
+
+	// the teleport function moves the camera POV whilst staring at the star
+
+	// when you arrive at a new star, you are in orbit around it and are free to look around
+
+
+
+	<script src="js/controls/FlyControls.js"></script>
+
+	<script src="js/Detector.js"></script>
+
+	// the LOD stuff is from: https://github.com/mrdoob/three.js/blob/master/examples/webgl_lod.html
+
+
+	<script>
+	if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
+	var container, stats;
+	var camera, scene, renderer;
+	var geometry, objects;
+	var controls, clock = new THREE.Clock();
+
+
+	init();
+	animate();
+
+	function init() {
+		container = document.createElement( 'div' );
+		document.body.appendChild( container );
+
+		// set up the camera
+		camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 15000 );
+		camera.position.z = 1000;
+		controls = new THREE.FlyControls( camera );
+		controls.movementSpeed = 1000;
+		controls.rollSpeed = Math.PI / 10;
+
+
+
+		// set up the initial scene
+		scene = new THREE.Scene();
+		scene.fog = new THREE.Fog( 0x000000, 1, 15000 );
+		scene.autoUpdate = false;
+
+		// adding a light there
+		var light = new THREE.PointLight( 0xff2200 );
+		light.position.set( 0, 0, 0 );
+		scene.add( light );
+		var light = new THREE.DirectionalLight( 0xffffff );
+		light.position.set( 0, 0, 1 ).normalize();
+		light.castShadwo = true;
+		scene.add( light );
+
+
+		// make a list of the different objects separated by the different distances
+		var geometry = [
+			[ new THREE.IcosahedronBufferGeometry( 100, 4 ), 50 ],
+			[ new THREE.IcosahedronBufferGeometry( 100, 3 ), 300 ],
+			[ new THREE.DodecahedronBufferGeometry( 100, 0 ), 1000 ]
+		];
+
+
+		var material = new THREE.MeshLambertMaterial( { color: 0xffffff, wireframe: true } );
+		var i, j, mesh, lod;
+
+		// for all the stars....
+		var nstars = 200;
+
+
+
+
+		var pnum = 1;
+
+		for ( j = 0; j < nstars; j ++ ) {
+
+			// to make a system, all objects start at the origin, and then we need to translate them
+			/* to the correct positions. We add the star at the origin, make mesh for it
+			then add the planet, add mesh, rotate it, THEN translate it to the correct position
+			in its orbit, THEN combine the planet and star into a System, and THEN translate this
+			to the correct position. Finally we build the LOD for this system and move to
+			the position in the Universe. Phew! */
+
+			var starsystem = new THREE.Group();
+
+			// make the star
+			var stargeometry = new THREE.SphereBufferGeometry( 5, 8, 8 );
+			var starmaterial = new THREE.MeshBasicMaterial( {color: 0xffff00} );
+			var star = new THREE.Mesh( stargeometry, starmaterial );
+			// scale up star and move it if needed
+			star.scale.set(2.0, 2.0, 2.0);
+
+			star.updateMatrix();
+
+			starsystem.add( star );
+
+			// make the planet(s)
+
+			// TODO BEGIN loop for nplanets
+			var planetgeometry = new THREE.SphereBufferGeometry( 5, 8, 8 );
+			var planetmaterial = new THREE.MeshPhongMaterial( { color: 0xff0000 } );
+
+			//	var planetmaterial = new THREE.MeshBasicMaterial( {color: 0xff0000} );
+			var planet = new THREE.Mesh( planetgeometry, planetmaterial );
+			// scale down planet....
+			var rplanet = 1.;
+			planet.scale.set(rplanet, rplanet, rplanet);
+			planet.name = "planet" + pnum;
+			posn = orbitBody(1, 10, 0.6, 50.);
+			planet.position.x = posn[0];
+			planet.position.y = posn[1];
+			planet.position.z = 0.0;
+
+			planet.updateMatrix();
+
+			starsystem.add( planet );
+
+			// create the orbit line
+			var points = [];
+			for ( var t = 0; t < 10; t +=0.10 ) {
+				particle = new THREE.Sprite( material );
+				posn = orbitBody(t, 10, 0.6, 50.);
+				particle.position.x = posn[0];
+				particle.position.y = posn[1];
+				particle.position.z = 0;
+				points.push( particle.position );
+			}
+
+			var geomorb = new THREE.BufferGeometry().setFromPoints( points );
+			var orbit = new THREE.Line( geomorb, new THREE.LineBasicMaterial( { color: 0xffffff, opacity: 0.5 } ) );
+			starsystem.add( orbit );
+
+			console.log(planet.name);
+			pnum += 1;
+
+			// TODO END loop for nplanets
+
+
+			// var starlight = new THREE.PointLight(0xffffff, 2.0, 600);
+//			var starlight = new THREE.DirectionalLight(0xffffff, 2.0, 100000);
+//			starlight.target = planet;
+
+			starsystem.updateMatrix();
+			scene.add( starsystem );
+
+
+						// inside this LoD are three different levels of detail and three meshes
+						lod = new THREE.LOD();
+
+/*			[ new THREE.IcosahedronBufferGeometry( 100, 4 ), 50 ],
+			[ new THREE.IcosahedronBufferGeometry( 100, 3 ), 300 ],
+			[ new THREE.DodecahedronBufferGeometry( 100, 0 ), 1000 ]
+*/
+/*			for ( i = 0; i < geometry.length; i ++ ) {
+				mesh = new THREE.Mesh( geometry[ i ][ 0 ], material );
+				mesh.scale.set( 1.5, 1.5, 1.5 );
+				mesh.updateMatrix();
+				mesh.matrixAutoUpdate = false;
+				lod.addLevel( mesh, geometry[ i ][ 1 ] );
+			} */
+			lod = new THREE.LOD();
+			mesh1 = new THREE.Mesh(new THREE.DodecahedronBufferGeometry( 100, 0 ), material);
+			mesh2 = new THREE.Mesh(new THREE.DodecahedronBufferGeometry( 100, 2 ), material);
+
+			mesh1.scale.set( 1.5, 1.5, 1.5 );
+			mesh1.updateMatrix();
+			mesh1.matrixAutoUpdate = false;
+
+			mesh2.scale.set( 1.5, 1.5, 1.5 );
+			mesh2.updateMatrix();
+			mesh2.matrixAutoUpdate = false;
+
+			lod.addLevel(mesh1, 5000);
+			lod.addLevel(mesh2, 1000);
+			lod.addLevel(starsystem, 300);
+
+
+			// TODO move star system to its position in the Galaxy
+			lod.position.x = 10000 * ( 0.5 - Math.random() );
+			lod.position.y =  7500 * ( 0.5 - Math.random() );
+			lod.position.z = 10000 * ( 0.5 - Math.random() );
+			lod.updateMatrix();
+
+			// WARNING not sure that this should be set... we want the planets to move in their orbits!
+			lod.matrixAutoUpdate = false;
+
+			// put it into the scene
+			scene.add( lod );
+		}
+
+		var thisPlanet = scene.getObjectByName( "planet192" );
+
+		// test if I can grab a planet
+		console.log(thisPlanet.position.x);
+
+		renderer = new THREE.WebGLRenderer( { antialias: true } );
+		renderer.setPixelRatio( window.devicePixelRatio );
+		renderer.setSize( window.innerWidth, window.innerHeight );
+		container.appendChild( renderer.domElement );
+		//
+		window.addEventListener( 'resize', onWindowResize, false );
+	}
+
+
+
+	// other functions
+	function onWindowResize() {
+		camera.aspect = window.innerWidth / window.innerHeight;
+		camera.updateProjectionMatrix();
+		renderer.setSize( window.innerWidth, window.innerHeight );
+	}
+
+
+	// animation
+	function animate() {
+
+		// TODO move the planets around in their orbits
+
+		requestAnimationFrame( animate );
+		render();
+	}
+
+	// render it!
+	function render() {
+		controls.update( clock.getDelta() );
+		scene.updateMatrixWorld();
+		scene.traverse( function ( object ) {
+			if ( object instanceof THREE.LOD ) {
+				object.update( camera );
+			}
+		} );
+		renderer.render( scene, camera );
+	}
+
+
+/* Kepler solver from http://nbodyphysics.com/blog/2016/05/29/planetary-orbits-in-javascript/ */
+
+	function orbitBody(time, P, e, a) {
+
+		var LOOP_LIMIT = 10;
+
+		// 1) find the relative time in the orbit and convert to Radians
+		var M = 2.0 * Math.PI * time/P;
+		// 2) Seed with mean anomaly and solve Kepler's eqn for E
+		var u = M; // seed with mean anomoly
+		var u_next = 0;
+		var loopCount = 0;
+		// iterate until within 10-6
+		while(loopCount++ < LOOP_LIMIT) {
+			// this should always converge in a small number of iterations - but be paranoid
+			u_next = u + (M - (u - e * Math.sin(u)))/(1 - e * Math.cos(u));
+			if (Math.abs(u_next - u) < 1E-6)
+			break;
+			u = u_next;
+		}
+
+		// 2) eccentric anomaly is angle from center of ellipse, not focus (where centerObject is). Convert
+		// to true anomoly, f - the angle measured from the focus. (see Fig 3.2 in Gravity)
+		var cos_f = (Math.cos(u) - e)/(1 - e * Math.cos(u));
+		var sin_f = (Math.sqrt(1 - e*e) * Math.sin (u))/(1 - e * Math.cos(u));
+		var r = a * (1 - e*e)/(1 + e * cos_f);
+
+		x = r*cos_f;
+		y = r*sin_f;
+
+		return ([x,y]);
+	}
+
+
+	</script>
+
+
+</body>
+</html>
