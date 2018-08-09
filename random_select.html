@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<title>cardboard_universe</title>
+	<title>three.js css3d - periodic table</title>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 	<link rel="stylesheet" href="css/styles.css">
@@ -12,14 +12,29 @@
 
 	// each target star has a star and one or more planets that orbit around them
 
-	// all stars have their name labelled with them
+	// all stars have their name labelled with them, oriented so that you can see the name
+
 	// Each target star is stored as a LevelOfDetail (LOD) object that at big distances
+	// has an octahedron, mid distance has a sphere for the star and sphere for the planet
+	// close up has a detailed star and detailed planet in orbit around it
+
+	// you are in orbit around a CurrentStar identified by a unique code (probably the name)
+
+	// when you stare at a specific star, after 5 seconds you teleport to that star
+
+
+	// the teleport function moves the camera POV whilst staring at the star
+
+	// when you arrive at a new star, you are in orbit around it and are free to look around
+
+
 
 	<script src="js/controls/FlyControls.js"></script>
 
 	<script src="js/Detector.js"></script>
 
 	// the LOD stuff is from: https://github.com/mrdoob/three.js/blob/master/examples/webgl_lod.html
+
 
 	<script>
 	if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
@@ -59,6 +74,15 @@
 		light.castShadwo = true;
 		scene.add( light );
 
+
+		// make a list of the different objects separated by the different distances
+		var geometry = [
+			[ new THREE.IcosahedronBufferGeometry( 100, 4 ), 50 ],
+			[ new THREE.IcosahedronBufferGeometry( 100, 3 ), 300 ],
+			[ new THREE.DodecahedronBufferGeometry( 100, 0 ), 1000 ]
+		];
+
+
 		var material = new THREE.MeshLambertMaterial( { color: 0xffffff, wireframe: true } );
 		var i, j, mesh, lod;
 
@@ -67,9 +91,9 @@
 
 		var pnum = 1;
 
-		for ( j = 0; j < nstars; j ++ ) { // loop over all the stars with planets
+		for ( j = 0; j < nstars; j ++ ) {
 
-			// to make a starsystem, all objects start at the origin, and then we need to translate them
+			// to make a system, all objects start at the origin, and then we need to translate them
 			/* to the correct positions. We add the star at the origin, make mesh for it
 			then add the planet, add mesh, rotate it, THEN translate it to the correct position
 			in its orbit, THEN combine the planet and star into a System, and THEN translate this
@@ -79,10 +103,11 @@
 			var starsystem = new THREE.Group();
 
 			// make the star
-
-			var stargeometry = new THREE.SphereBufferGeometry( 10, 8, 8 );
+			var stargeometry = new THREE.SphereBufferGeometry( 5, 8, 8 );
 			var starmaterial = new THREE.MeshBasicMaterial( {color: 0xffff00} );
 			var star = new THREE.Mesh( stargeometry, starmaterial );
+			// scale up star and move it if needed
+			star.scale.set(2.0, 2.0, 2.0);
 
 			star.updateMatrix();
 
@@ -91,43 +116,38 @@
 			// make the planet(s)
 
 			// TODO BEGIN loop for nplanets
-			nplanets = 4;
+			var planetgeometry = new THREE.SphereBufferGeometry( 5, 8, 8 );
+			var planetmaterial = new THREE.MeshPhongMaterial( { color: 0xff0000 } );
 
-			for (var currp = 0; currp < nplanets; currp++) {
-				var planetgeometry = new THREE.SphereBufferGeometry( 5, 8, 8 );
-				var planetmaterial = new THREE.MeshPhongMaterial( { color: 0xff0000 } );
+			//	var planetmaterial = new THREE.MeshBasicMaterial( {color: 0xff0000} );
+			var planet = new THREE.Mesh( planetgeometry, planetmaterial );
+			// scale down planet....
+			var rplanet = 1.;
+			planet.scale.set(rplanet, rplanet, rplanet);
+			planet.name = "planet" + pnum;
+			P = 20 * (Math.random()) + 1;
+			e = 0.6 * (Math.random());
 
-				//	var planetmaterial = new THREE.MeshBasicMaterial( {color: 0xff0000} );
-				var planet = new THREE.Mesh( planetgeometry, planetmaterial );
-				// set size of planet
-				
-        var rplanet = 1.;
-				planet.scale.set(rplanet, rplanet, rplanet);
+			a = 50 + 10 * (Math.random() - 0.5);
+			posn = orbitBody(1, P, e, a);
+			planet.position.x = posn[0];
+			planet.position.y = posn[1];
+			planet.position.z = 0.0;
 
-        planet.name = "planet" + pnum;
-				P = 20 * (Math.random()) + 1;
-				e = 0.6 * (Math.random());
+			planet.updateMatrix();
 
-				a = (50 + 10 * (Math.random() - 0.5)) * currp;
+			starsystem.add( planet );
 
-				planet.userData.P = P;
-				planet.userData.a = a;
-				planet.userData.e = e;
-				posn = orbitBody(1, P, e, a);
-				planet.position.set(posn[0],posn[1],0);
-
-				planet.updateMatrix();
-
-				starsystem.add( planet );
-
-				// create the orbit line
-				var points = [];
-				for ( var t = 0; t < P; t +=P/100. ) {
-					particle = new THREE.Sprite( material );
-					posn = orbitBody(t, P, e, a);
-					particle.position.set(posn[0],posn[1],0);
-					points.push( particle.position );
-				}
+			// create the orbit line
+			var points = [];
+			for ( var t = 0; t < P; t +=P/100. ) {
+				particle = new THREE.Sprite( material );
+				posn = orbitBody(t, P, e, a);
+				particle.position.x = posn[0];
+				particle.position.y = posn[1];
+				particle.position.z = 0;
+				points.push( particle.position );
+			}
 
 			var geomorb = new THREE.BufferGeometry().setFromPoints( points );
 			var orbit = new THREE.Line( geomorb, new THREE.LineBasicMaterial( { color: 0xffffff, opacity: 0.5 } ) );
@@ -136,32 +156,56 @@
 			console.log(planet.name);
 			pnum += 1;
 
-		}
+			// TODO END loop for nplanets
 
-			// TODO make stars shine onto their planets only
+
 			// var starlight = new THREE.PointLight(0xffffff, 2.0, 600);
-			//			var starlight = new THREE.DirectionalLight(0xffffff, 2.0, 100000);
-			//			starlight.target = planet;
+//			var starlight = new THREE.DirectionalLight(0xffffff, 2.0, 100000);
+//			starlight.target = planet;
 
 			starsystem.updateMatrix();
 			scene.add( starsystem );
 
-			lod = new THREE.LOD();
-			mesh1 = new THREE.Mesh(new THREE.DodecahedronBufferGeometry( 150, 0 ), material);
-			mesh2 = new THREE.Mesh(new THREE.DodecahedronBufferGeometry( 150, 2 ), material);
 
+						// inside this LoD are three different levels of detail and three meshes
+						lod = new THREE.LOD();
+
+/*			[ new THREE.IcosahedronBufferGeometry( 100, 4 ), 50 ],
+			[ new THREE.IcosahedronBufferGeometry( 100, 3 ), 300 ],
+			[ new THREE.DodecahedronBufferGeometry( 100, 0 ), 1000 ]
+*/
+/*			for ( i = 0; i < geometry.length; i ++ ) {
+				mesh = new THREE.Mesh( geometry[ i ][ 0 ], material );
+				mesh.scale.set( 1.5, 1.5, 1.5 );
+				mesh.updateMatrix();
+				mesh.matrixAutoUpdate = false;
+				lod.addLevel( mesh, geometry[ i ][ 1 ] );
+			} */
+			lod = new THREE.LOD();
+			mesh1 = new THREE.Mesh(new THREE.DodecahedronBufferGeometry( 100, 0 ), material);
+			mesh2 = new THREE.Mesh(new THREE.DodecahedronBufferGeometry( 100, 2 ), material);
+
+			mesh1.scale.set( 1.5, 1.5, 1.5 );
+			mesh1.updateMatrix();
 			mesh1.matrixAutoUpdate = false;
+
+			mesh2.scale.set( 1.5, 1.5, 1.5 );
+			mesh2.updateMatrix();
 			mesh2.matrixAutoUpdate = false;
 
 			lod.addLevel(mesh1, 5000);
 			lod.addLevel(mesh2, 1000);
 			lod.addLevel(starsystem, 300);
 
+
 			// TODO move star system to its position in the Galaxy
-			//			lod.position.x = 10000 * ( 0.5 - Math.random() );
-			//		lod.position.y =  7500 * ( 0.5 - Math.random() );
-			//			lod.position.z = 10000 * ( 0.5 - Math.random() );
-			lod.position.x = j * 300;
+//			lod.position.x = 10000 * ( 0.5 - Math.random() );
+	//		lod.position.y =  7500 * ( 0.5 - Math.random() );
+//			lod.position.z = 10000 * ( 0.5 - Math.random() );
+lod.position.x = j * 300;
+
+
+
 
 			lod.updateMatrix();
 
@@ -171,6 +215,10 @@
 			// put it into the scene
 			scene.add( lod );
 		}
+
+		// test if I can grab a planet
+		var thisPlanet = scene.getObjectByName( "planet192" );
+		console.log(thisPlanet.position.x);
 
 		renderer = new THREE.WebGLRenderer( { antialias: true } );
 		renderer.setPixelRatio( window.devicePixelRatio );
@@ -189,6 +237,9 @@
 
 	// animation
 	function animate() {
+
+		// TODO move the planets around in their orbits
+
 		requestAnimationFrame( animate );
 		render();
 	}
@@ -202,22 +253,11 @@
 				object.update( camera );
 			}
 		} );
-
-		// TODO move the planets around in their orbits
-		currplanet = 'planet9';
-		var thisPlanet = scene.getObjectByName( "planet9" );
-
-
-
-/*		https://www.evermade.fi/pure-three-js-hud/
-
-
-https://codepen.io/jaamo/pen/MaOGZV?editors=1111    */
 		renderer.render( scene, camera );
 	}
 
 
-	/* Kepler solver from http://nbodyphysics.com/blog/2016/05/29/planetary-orbits-in-javascript/ */
+/* Kepler solver from http://nbodyphysics.com/blog/2016/05/29/planetary-orbits-in-javascript/ */
 
 	function orbitBody(time, P, e, a) {
 
@@ -249,8 +289,8 @@ https://codepen.io/jaamo/pen/MaOGZV?editors=1111    */
 
 		return ([x,y]);
 	}
-
-</script>
+	
+	</script>
 
 
 </body>
