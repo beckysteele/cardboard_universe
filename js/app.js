@@ -1,3 +1,13 @@
+/* To Do: 
+    - Create a test table with two JSON objects, each with ra, dec
+    - Get table.sphere to render those two objects on the sphere instead of the elements, at their converted ra/dec --> spherical coordinates
+    - Get the table.sphere to show up first, instead of the table
+    - Try to loop through JSON object from Brigetta, rendering those objects
+    - Ensure that the user has the ability to move around within the sphere
+    - Make it fancy
+    - Other stuff?
+*/
+
 var table = [
     "H", "Hydrogen", "1.00794", 1, 1,
     "He", "Helium", "4.002602", 18, 1,
