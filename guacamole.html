@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>cardboard_universe</title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+	<script src="js/three.min.js"></script>
+	<script src="js/tween.min.js"></script>
+	// each target star has a star and one or more planets that orbit around them
+
+	// all stars have their name labelled with them
+	// Each target star is stored as a LevelOfDetail (LOD) object that at big distances
+
+	<script src="js/controls/FlyControls.js"></script>
+
+	<script src="js/Detector.js"></script>
+
+	// the LOD stuff is from: https://github.com/mrdoob/three.js/blob/master/examples/webgl_lod.html
+
+	<script>
+	if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
+	var container, stats;
+	var camera, scene, renderer;
+	var geometry, objects;
+	var controls, clock = new THREE.Clock();
+	var pnum = 1;
+
+	init();
+	animate();
+
+	function init() {
+		container = document.createElement( 'div' );
+		document.body.appendChild( container );
+
+		// set up the camera
+		camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 15000 );
+		camera.position.z = 1000;
+		controls = new THREE.FlyControls( camera );
+		controls.movementSpeed = 1000;
+		controls.rollSpeed = Math.PI / 10;
+
+		// set up the initial scene
+		scene = new THREE.Scene();
+		scene.fog = new THREE.Fog( 0x000000, 1, 15000 );
+		scene.autoUpdate = false;
+
+		// adding a light there
+		var light = new THREE.PointLight( 0xff2200 );
+		light.position.set( 0, 0, 0 );
+		scene.add( light );
+		var light = new THREE.DirectionalLight( 0xffffff );
+		light.position.set( 0, 0, 1 ).normalize();
+		light.castShadwo = true;
+		scene.add( light );
+
+		var material = new THREE.MeshLambertMaterial( { color: 0xffffff, wireframe: true } );
+		var i, j, mesh, lod;
+
+
+
+
+
+
+
+		// here be dragone!
+		// here be dragone!
+		// here be dragone!
+		// here be dragone!
+		// here be dragone!
+		// here be dragone!
+
+
+
+		loadExoplanetData(function(response) {
+			// Parse exoplanet data
+			var exoplanet_data = JSON.parse(response);
+
+			// Figure out how many there are
+			var exoplanet_count = Object.keys(exoplanet_data.pl_name).length;
+
+			// Loop through them and assign corresponding variables
+			for(var i = 0; i < exoplanet_count; i++){
+				var planet_name = exoplanet_data.pl_name[i];
+				var planet_host_name = exoplanet_data.pl_hostname[i];
+				var planet_orbper = exoplanet_data.pl_orbper[i];
+				var planet_rad = exoplanet_data.pl_radj[i];
+				var planet_orbsmax = exoplanet_data.pl_orbsmax[i];
+
+				// Convert any "falsey" values (undefined, null, etc) to 0 if detected
+				var planet_eccentricity = exoplanet_data.pl_orbeccen[i] || 0;
+
+				// Uncomment the line below if you want to see an example use of these vars
+				// console.log("Planet name: " + planet_name + ", Host star name: " + planet_host_name + ", Orbital period: " + planet_orbper + ", Radius: " + planet_rad + ", Orbital maximum: " + planet_orbsmax);
+			}
+		});
+
+		loadHostStarData(function(response){
+			// Parse Host Star data
+			var host_star_data = JSON.parse(response);
+
+			// Figure out how many there are
+			var host_star_count = Object.keys(host_star_data.pl_hostname).length;
+
+			// Loop through them and assign corresponding variables
+			for(var i = 0; i < host_star_count; i++) {
+				var host_star_name = host_star_data.pl_hostname[i];
+				var host_star_ra = host_star_data.ra[i];
+				var host_star_dec = host_star_data.dec[i];
+				var host_star_dist = host_star_data.st_dist[i];
+				var host_star_teff = host_star_data.st_teff[i];
+
+				// Uncomment the line below if you want to see an example use of these vars
+				// console.log("Host star name: " + host_star_name + ", ra: " + host_star_ra + ", dec: " + host_star_dec + ", distance (pc): " + host_star_dist + ", effective temperature (K): " + host_star_teff);
+			}
+		});
+
+		loadHostStarTemps(function(response){
+			// Parse temperature data
+			var host_star_rgb = JSON.parse(response);
+
+			// Figure out how many there are
+			var temps_count = Object.keys(host_star_rgb.kelvin_value).length;
+
+			// Loop through them and assign corresponding variables
+			var kelvin_color = [];
+			for(var i = 0; i < temps_count; i++) {
+				var red_color = host_star_rgb.kelvin_value[i].R;
+				var green_color = host_star_rgb.kelvin_value[i].G;
+				var blue_color = host_star_rgb.kelvin_value[i].B;
+				var str_constructor = "rgb(" + red_color + ", " + green_color + ", " + blue_color + ")";
+				kelvin_color.push(str_constructor);
+			}
+			// Uncomment this line to see how you would pass a Kelvin value and get its rgb color back from the kelvin_color array
+			// console.log(kelvin_color[11000]);
+		});
+
+		function loadExoplanetData(callback) {
+
+			// This loads the JSON file by making an HTTP request by opening the file and sending the response back to the calling function
+			var xobj = new XMLHttpRequest();
+			xobj.overrideMimeType("application/json");
+			xobj.open('GET', 'data_loader/exoplanets.json', true); // exoplanet_hosts.json must exist at the same level as app.js in this example
+			xobj.onreadystatechange = function () {
+				if (xobj.readyState == 4 && xobj.status == "200") {
+					callback(xobj.responseText);
+				}
+			};
+			xobj.send(null);
+		}
+
+		function loadHostStarData(callback) {
+
+			// This loads the JSON file by making an HTTP request by opening the file and sending the response back to the calling function
+			var xobj = new XMLHttpRequest();
+			xobj.overrideMimeType("application/json");
+			xobj.open('GET', 'data_loader/exoplanet_hosts.json', true); // exoplanet_hosts.json must exist at the same level as app.js in this example
+			xobj.onreadystatechange = function () {
+				if (xobj.readyState == 4 && xobj.status == "200") {
+					callback(xobj.responseText);
+				}
+			};
+			xobj.send(null);
+		}
+
+		function loadHostStarTemps(callback) {
+
+			// This loads the JSON file by making an HTTP request by opening the file and sending the response back to the calling function
+			var xobj = new XMLHttpRequest();
+			xobj.overrideMimeType("application/json");
+			xobj.open('GET', 'data_loader/temperatures.json', true); // exoplanet_hosts.json must exist at the same level as app.js in this example
+			xobj.onreadystatechange = function () {
+				if (xobj.readyState == 4 && xobj.status == "200") {
+					callback(xobj.responseText);
+				}
+			};
+			xobj.send(null);
+		}
+
+
+
+
+
+
+
+
+
+
+		var staronly;
+
+		// for all the stars....
+		var nstars = 60;
+		elapse = clock.getElapsedTime();
+
+		console.log('Making all the planets....')
+
+		for ( j = 0; j < nstars; j ++ ) { // loop over all the stars with planets
+
+			// to make a starsystem, all objects start at the origin, and then we need to translate them
+			/* to the correct positions. We add the star at the origin, make mesh for it
+			then add the planet, add mesh, rotate it, THEN translate it to the correct position
+			in its orbit, THEN combine the planet and star into a System, and THEN translate this
+			to the correct position. Finally we build the LOD for this system and move to
+			the position in the Universe. Phew! */
+
+			var starsystem = new THREE.Group();
+
+			// make the star
+
+			var stargeometry = new THREE.SphereBufferGeometry( 10, 8, 8 );
+			var starmaterial = new THREE.MeshBasicMaterial( {color: 0xffff00} );
+			var star = new THREE.Mesh( stargeometry, starmaterial );
+
+			staronly = star.clone();
+
+			star.updateMatrix();
+
+			starsystem.add( star );
+
+			// make the planet(s)
+
+			// TODO BEGIN loop for nplanets
+			nplanets = 4;
+
+			for (var currp = 1; currp < nplanets; currp++) {
+				var planetgeometry = new THREE.SphereBufferGeometry( 5, 8, 8 );
+				var planetmaterial = new THREE.MeshPhongMaterial( { color: 0xff0000 } );
+
+				//	var planetmaterial = new THREE.MeshBasicMaterial( {color: 0xff0000} );
+				var planet = new THREE.Mesh( planetgeometry, planetmaterial );
+
+				// set size of planet
+				var rplanet = 1.;
+				planet.scale.set(rplanet, rplanet, rplanet);
+
+				planet.name = "planet" + pnum;
+				P = 10 * (Math.random()) + 1;
+				e = 0.8 * (Math.random());
+
+				a = (30 + 10 * (Math.random() - 0.5)) * currp;
+
+				planet.userData.P = P;
+				planet.userData.semimaj = a;
+				planet.userData.e = e;
+
+				posn = orbitBody(1, P, e, a);
+				planet.position.set(posn[0],posn[1],0);
+
+				planet.updateMatrix();
+
+				starsystem.add( planet );
+
+				// create the orbit line
+				var points = [];
+				for ( var t = 0; t < P; t +=P/100. ) {
+					particle = new THREE.Sprite( material );
+					posn = orbitBody(t, P, e, a);
+					particle.position.set(posn[0],posn[1],0);
+					points.push( particle.position );
+				}
+
+				var geomorb = new THREE.BufferGeometry().setFromPoints( points );
+				var orbit = new THREE.LineLoop( geomorb, new THREE.LineBasicMaterial( { color: 0xffffff, opacity: 0.5 } ) );
+				starsystem.add( orbit );
+
+				pnum += 1;
+
+			}
+
+			// TODO make stars shine onto their planets only
+			// var starlight = new THREE.PointLight(0xffffff, 2.0, 600);
+			//			var starlight = new THREE.DirectionalLight(0xffffff, 2.0, 100000);
+			//			starlight.target = planet;
+
+			starsystem.updateMatrix();
+			scene.add( starsystem );
+
+			lod = new THREE.LOD();
+
+			lod.addLevel(staronly, 2000);
+			lod.addLevel(starsystem, 100);
+
+			// TODO move star system to its position in the Galaxy
+			//			lod.position.x = 10000 * ( 0.5 - Math.random() );
+			//		lod.position.y =  7500 * ( 0.5 - Math.random() );
+			//			lod.position.z = 10000 * ( 0.5 - Math.random() );
+			lod.position.x = j * 300;
+
+			lod.updateMatrix();
+
+			// WARNING not sure that this should be set... we want the planets to move in their orbits!
+			lod.matrixAutoUpdate = false;
+
+			// put it into the scene
+			scene.add( lod );
+		}
+
+		console.log('...done! ' + pnum + ' planets added.');
+		elapse = clock.getElapsedTime();
+
+		console.log(elapse + ' seconds.')
+
+		renderer = new THREE.WebGLRenderer( { antialias: true } );
+		renderer.setPixelRatio( window.devicePixelRatio );
+		renderer.setSize( window.innerWidth, window.innerHeight );
+		container.appendChild( renderer.domElement );
+		//
+		window.addEventListener( 'resize', onWindowResize, false );
+	}
+
+	// other functions
+	function onWindowResize() {
+		camera.aspect = window.innerWidth / window.innerHeight;
+		camera.updateProjectionMatrix();
+		renderer.setSize( window.innerWidth, window.innerHeight );
+	}
+
+	// animation
+	function animate() {
+		requestAnimationFrame( animate );
+		render();
+	}
+
+	// render it!
+	function render() {
+		controls.update( clock.getDelta() );
+		scene.updateMatrixWorld();
+		scene.traverse( function ( object ) {
+			if ( object instanceof THREE.LOD ) {
+				object.update( camera );
+			}
+		} );
+
+		// TODO move the planets around in their orbits
+		for (var cp = 1; cp < pnum; cp++ ) {
+			var currplanet = 'planet'+cp;
+			var thisPlanet = scene.getObjectByName( currplanet );
+
+			// get the current time in seconds since script started
+			var time = clock.getElapsedTime();
+			var newposn = orbitBody(time, thisPlanet.userData.P, thisPlanet.userData.e, thisPlanet.userData.semimaj);
+
+			thisPlanet.position.set(newposn[0],newposn[1],0);
+			//		thisPlanet.updateMatrix();
+		}
+		/*		https://www.evermade.fi/pure-three-js-hud/
+
+
+		https://codepen.io/jaamo/pen/MaOGZV?editors=1111    */
+
+		renderer.render( scene, camera );
+	}
+
+
+	/* Kepler solver from http://nbodyphysics.com/blog/2016/05/29/planetary-orbits-in-javascript/ */
+
+	function orbitBody(time, P, e, a) {
+
+		var LOOP_LIMIT = 10;
+
+		// 1) find the relative time in the orbit and convert to Radians
+		var M = 2.0 * Math.PI * time/P;
+		// 2) Seed with mean anomaly and solve Kepler's eqn for E
+		var u = M; // seed with mean anomoly
+		var u_next = 0;
+		var loopCount = 0;
+		// iterate until within 10-6
+		while(loopCount++ < LOOP_LIMIT) {
+			// this should always converge in a small number of iterations - but be paranoid
+			u_next = u + (M - (u - e * Math.sin(u)))/(1 - e * Math.cos(u));
+			if (Math.abs(u_next - u) < 1E-6)
+			break;
+			u = u_next;
+		}
+
+		// 2) eccentric anomaly is angle from center of ellipse, not focus (where centerObject is). Convert
+		// to true anomoly, f - the angle measured from the focus. (see Fig 3.2 in Gravity)
+		var cos_f = (Math.cos(u) - e)/(1 - e * Math.cos(u));
+		var sin_f = (Math.sqrt(1 - e*e) * Math.sin (u))/(1 - e * Math.cos(u));
+		var r = a * (1 - e*e)/(1 + e * cos_f);
+
+		x = r*cos_f;
+		y = r*sin_f;
+
+		return ([x,y]);
+	}
+
+</script>
+
+
+</body>
+</html>
