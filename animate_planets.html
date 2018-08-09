@@ -99,12 +99,12 @@
 
 				//	var planetmaterial = new THREE.MeshBasicMaterial( {color: 0xff0000} );
 				var planet = new THREE.Mesh( planetgeometry, planetmaterial );
-
 				// set size of planet
-				var rplanet = 1.;
+				
+        var rplanet = 1.;
 				planet.scale.set(rplanet, rplanet, rplanet);
 
-				planet.name = "planet" + pnum;
+        planet.name = "planet" + pnum;
 				P = 20 * (Math.random()) + 1;
 				e = 0.6 * (Math.random());
 
@@ -113,7 +113,6 @@
 				planet.userData.P = P;
 				planet.userData.a = a;
 				planet.userData.e = e;
-
 				posn = orbitBody(1, P, e, a);
 				planet.position.set(posn[0],posn[1],0);
 
@@ -214,7 +213,6 @@
 
 
 https://codepen.io/jaamo/pen/MaOGZV?editors=1111    */
-
 		renderer.render( scene, camera );
 	}
 
