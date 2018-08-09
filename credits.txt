@@ -1,0 +1,7 @@
+#AstroHackWeek
+
+Brigitta Sipocz - Counter of the Planets
+Becky Steele - Interpreter of the JSON
+Yanett Contreras - Colourer of the Stars
+David Fernando Freitas da Silva - Finder of the Galaxy
+Matthew Kenworthy - Mover of the Planets

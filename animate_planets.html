@@ -99,14 +99,20 @@
 
 				//	var planetmaterial = new THREE.MeshBasicMaterial( {color: 0xff0000} );
 				var planet = new THREE.Mesh( planetgeometry, planetmaterial );
-				// scale down planet....
+
+				// set size of planet
 				var rplanet = 1.;
 				planet.scale.set(rplanet, rplanet, rplanet);
+
 				planet.name = "planet" + pnum;
 				P = 20 * (Math.random()) + 1;
 				e = 0.6 * (Math.random());
 
 				a = (50 + 10 * (Math.random() - 0.5)) * currp;
+
+				planet.userData.P = P;
+				planet.userData.a = a;
+				planet.userData.e = e;
 
 				posn = orbitBody(1, P, e, a);
 				planet.position.set(posn[0],posn[1],0);
@@ -152,7 +158,6 @@
 			lod.addLevel(mesh2, 1000);
 			lod.addLevel(starsystem, 300);
 
-
 			// TODO move star system to its position in the Galaxy
 			//			lod.position.x = 10000 * ( 0.5 - Math.random() );
 			//		lod.position.y =  7500 * ( 0.5 - Math.random() );
@@ -167,10 +172,6 @@
 			// put it into the scene
 			scene.add( lod );
 		}
-
-		// test if I can grab a planet
-		var thisPlanet = scene.getObjectByName( "planet192" );
-		console.log(thisPlanet.position.x);
 
 		renderer = new THREE.WebGLRenderer( { antialias: true } );
 		renderer.setPixelRatio( window.devicePixelRatio );
@@ -189,9 +190,6 @@
 
 	// animation
 	function animate() {
-
-		// TODO move the planets around in their orbits
-
 		requestAnimationFrame( animate );
 		render();
 	}
@@ -206,14 +204,16 @@
 			}
 		} );
 
+		// TODO move the planets around in their orbits
+		currplanet = 'planet9';
 		var thisPlanet = scene.getObjectByName( "planet9" );
-		console.log(thisPlanet.position.x);
-//thisPlanet.position.z = thisPlanet.position.z + 5*(0.5 - Math.random());
 
-thisPlanet.position.x = 0;
-thisPlanet.position.y = 0;
-thisPlanet.position.z = 30;
 
+
+/*		https://www.evermade.fi/pure-three-js-hud/
+
+
+https://codepen.io/jaamo/pen/MaOGZV?editors=1111    */
 
 		renderer.render( scene, camera );
 	}
