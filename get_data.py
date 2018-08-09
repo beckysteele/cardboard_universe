@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from astropy.table import Table, unique
+from astropy.table import Table, Column, unique
 from astroquery.nasa_exoplanet_archive import NasaExoplanetArchive
 
 
@@ -23,6 +23,13 @@ exo_hosts = unique(Table(exo['pl_hostname', 'ra', 'dec', 'st_dist', 'st_teff']))
 
 exoplanets = Table(exo['pl_hostname', 'pl_name', 'pl_orbper',
                        'pl_radj', 'pl_orbsmax', 'pl_orbeccen'])
+
+# Converting planets' orbital periods to seconds and adding as an extra column
+
+orbits_d = exo["pl_orbper"].value
+orbits_s = [i*86400 for i in (orbits_d)]
+exoplanets.add_column(Column(np.log(orbits_s), name='pl_log_orbper'))
+
 
 # Saving the jsons, currently as an ugly hack
 
