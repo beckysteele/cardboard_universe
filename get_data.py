@@ -8,10 +8,12 @@ from astroquery.nasa_exoplanet_archive import NasaExoplanetArchive
 
 exo = NasaExoplanetArchive.get_confirmed_planets_table(all_columns=True)
 
-# We don't need the planets for this project that don't have a Gaia parallax,
-# nor the ones without a radius.
+# We don't need the planets for this project that don't have a distance,
+# know radius or orbital period
 
-to_remove_idx = np.where(np.logical_or(exo['st_dist'] == 0, exo['pl_radj'] == 0))[0]
+planet_filter = np.logical_or.reduce((exo['st_dist'] == 0, exo['pl_radj'] == 0,
+                                      exo['pl_orbper'] == 0))
+to_remove_idx = np.where(planet_filter)[0]
 
 exo.remove_rows(to_remove_idx)
 
