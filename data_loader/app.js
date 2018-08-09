@@ -1,6 +1,6 @@
 // Call the main function
 init();
-var this_data;
+
 function init() {
     loadExoplanetData(function(response) {
         // Parse exoplanet data
@@ -16,6 +16,9 @@ function init() {
             var planet_orbper = exoplanet_data.pl_orbper[i];
             var planet_rad = exoplanet_data.pl_radj[i];
             var planet_orbsmax = exoplanet_data.pl_orbsmax[i];
+
+            // Convert any "falsey" values (undefined, null, etc) to 0 if detected
+            var planet_eccentricity = exoplanet_data.pl_orbeccen[i] || 0;
             
             // Uncomment the line below if you want to see an example use of these vars
             // console.log("Planet name: " + planet_name + ", Host star name: " + planet_host_name + ", Orbital period: " + planet_orbper + ", Radius: " + planet_rad + ", Orbital maximum: " + planet_orbsmax);
@@ -41,6 +44,26 @@ function init() {
             // console.log("Host star name: " + host_star_name + ", ra: " + host_star_ra + ", dec: " + host_star_dec + ", distance (pc): " + host_star_dist + ", effective temperature (K): " + host_star_teff);
         }
         });
+
+        loadHostStarTemps(function(response){
+            // Parse temperature data
+            var host_star_rgb = JSON.parse(response);
+           
+            // Figure out how many there are
+            var temps_count = Object.keys(host_star_rgb.kelvin_value).length;
+
+            // Loop through them and assign corresponding variables
+            var kelvin_color = [];
+            for(var i = 0; i < temps_count; i++) {
+                var red_color = host_star_rgb.kelvin_value[i].R;
+                var green_color = host_star_rgb.kelvin_value[i].G;
+                var blue_color = host_star_rgb.kelvin_value[i].B;
+                var str_constructor = "rgb(" + red_color + ", " + green_color + ", " + blue_color + ")";
+                kelvin_color.push(str_constructor);
+            }
+            // Uncomment this line to see how you would pass a Kelvin value and get its rgb color back from the kelvin_color array
+            // console.log(kelvin_color[11000]);
+            });    
    }
 
 
@@ -64,6 +87,20 @@ function loadExoplanetData(callback) {
     var xobj = new XMLHttpRequest();
         xobj.overrideMimeType("application/json");
     xobj.open('GET', 'exoplanet_hosts.json', true); // exoplanet_hosts.json must exist at the same level as app.js in this example
+    xobj.onreadystatechange = function () {
+          if (xobj.readyState == 4 && xobj.status == "200") {
+            callback(xobj.responseText);
+          }
+    };
+    xobj.send(null);  
+ }
+
+ function loadHostStarTemps(callback) {   
+
+    // This loads the JSON file by making an HTTP request by opening the file and sending the response back to the calling function
+    var xobj = new XMLHttpRequest();
+        xobj.overrideMimeType("application/json");
+    xobj.open('GET', 'temperatures.json', true); // exoplanet_hosts.json must exist at the same level as app.js in this example
     xobj.onreadystatechange = function () {
           if (xobj.readyState == 4 && xobj.status == "200") {
             callback(xobj.responseText);
