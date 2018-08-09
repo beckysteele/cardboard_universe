@@ -36,7 +36,7 @@
 		document.body.appendChild( container );
 
 		// set up the camera
-		camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 15000 );
+		camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 150000 );
 		camera.position.z = 1000;
 		controls = new THREE.FlyControls( camera );
 		controls.movementSpeed = 1000;
@@ -44,22 +44,23 @@
 
 		// set up the initial scene
 		scene = new THREE.Scene();
-		scene.fog = new THREE.Fog( 0x000000, 1, 15000 );
+		scene.fog = new THREE.Fog( 0x000000, 1, 150000 );
 		scene.autoUpdate = false;
 
-		// adding a light there
-		var light = new THREE.PointLight( 0xff2200 );
-		light.position.set( 0, 0, 0 );
-		scene.add( light );
-		var light = new THREE.DirectionalLight( 0xffffff );
-		light.position.set( 0, 0, 1 ).normalize();
-		light.castShadwo = true;
-		scene.add( light );
-
-		var material = new THREE.MeshLambertMaterial( { color: 0xffffff, wireframe: true } );
+//		var material = new THREE.MeshLambertMaterial( { color: 0xffffff, wireframe: true } );
 		var i, j, mesh, lod;
 
-
+		// the background of the galaxy
+		// note that it is on a very large internal sphere, and you need to make sure
+		// that the Fog and CameraView has a large enough radius to see them!
+		var geometry_galaxy = new THREE.SphereBufferGeometry( 50000, 60, 40 );
+		// invert the geometry on the x-axis so that all of the faces point inward
+						geometry_galaxy.scale( - 1, 1, 1 );
+						var material = new THREE.MeshBasicMaterial( {
+							map: new THREE.TextureLoader().load( 'data/TychoSkymapII.t5_08192x04096.jpg' )
+						} );
+		mesh = new THREE.Mesh( geometry_galaxy, material );
+		scene.add( mesh );
 
 
 
@@ -72,7 +73,7 @@
 		// here be dragone!
 		// here be dragone!
 
-
+		var host_star_data;
 
 		loadExoplanetData(function(response) {
 			// Parse exoplanet data
@@ -99,7 +100,7 @@
 
 		loadHostStarData(function(response){
 			// Parse Host Star data
-			var host_star_data = JSON.parse(response);
+			host_star_data = JSON.parse(response);
 
 			// Figure out how many there are
 			var host_star_count = Object.keys(host_star_data.pl_hostname).length;
@@ -194,9 +195,27 @@
 		var nstars = 60;
 		elapse = clock.getElapsedTime();
 
+		// load the host star data
+		var host_star_data = loadExoplanetData();
+
+//		console.log(host_star_data.pl_hostname[2]);
+
+		// Figure out how many there are
+		// var host_star_count = Object.keys(host_star_data.pl_hostname).length;
+		console.log(host_star_data);
+
 		console.log('Making all the planets....')
 
-		for ( j = 0; j < nstars; j ++ ) { // loop over all the stars with planets
+		for ( j = 0; j < 80; j++ ) { // loop over all the stars with planets
+
+
+//			var host_star_name = host_star_data.pl_hostname[j];
+//			var host_star_ra = host_star_data.ra[j];
+//			var host_star_dec = host_star_data.dec[j];
+//			var host_star_dist = host_star_data.st_dist[j];
+//			var host_star_teff = host_star_data.st_teff[j];
+
+//console.log("Host star name: " + host_star_name + ", ra: " + host_star_ra + ", dec: " + host_star_dec + ", distance (pc): " + host_star_dist + ", effective temperature (K): " + host_star_teff);
 
 			// to make a starsystem, all objects start at the origin, and then we need to translate them
 			/* to the correct positions. We add the star at the origin, make mesh for it
@@ -213,6 +232,11 @@
 			var starmaterial = new THREE.MeshBasicMaterial( {color: 0xffff00} );
 			var star = new THREE.Mesh( stargeometry, starmaterial );
 
+			// add a label to the star so that we can label/identify it
+			star.name = "star" + j;
+
+			// NOTE both star and staronly have the same .name so that either will
+			// be tagged with a tween
 			staronly = star.clone();
 
 			star.updateMatrix();
@@ -225,28 +249,35 @@
 			nplanets = 4;
 
 			for (var currp = 1; currp < nplanets; currp++) {
-				var planetgeometry = new THREE.SphereBufferGeometry( 5, 8, 8 );
-				var planetmaterial = new THREE.MeshPhongMaterial( { color: 0xff0000 } );
+				var planetgeometry = new THREE.SphereBufferGeometry( 1, 8, 8 );
 
-				//	var planetmaterial = new THREE.MeshBasicMaterial( {color: 0xff0000} );
+				var planetmaterial = new THREE.MeshLambertMaterial( { color: 0xff0000 } );
+
 				var planet = new THREE.Mesh( planetgeometry, planetmaterial );
 
 				// set size of planet
-				var rplanet = 1.;
+				var rplanet = 5. + 3* Math.random();
 				planet.scale.set(rplanet, rplanet, rplanet);
 
 				planet.name = "planet" + pnum;
-				P = 10 * (Math.random()) + 1;
+
 				e = 0.8 * (Math.random());
 
 				a = (30 + 10 * (Math.random() - 0.5)) * currp;
 
+				// something like a Kepler law...
+				P = a**(3./2.) / 30.;
+
 				planet.userData.P = P;
 				planet.userData.semimaj = a;
 				planet.userData.e = e;
+				planet.userData.radius = rplanet;
 
-				posn = orbitBody(1, P, e, a);
+				posn = orbitBody(0., P, e, a);
 				planet.position.set(posn[0],posn[1],0);
+
+				planet.castShadow = true;
+				planet.receiveShadow = true;
 
 				planet.updateMatrix();
 
@@ -266,35 +297,32 @@
 				starsystem.add( orbit );
 
 				pnum += 1;
-
 			}
 
-			// TODO make stars shine onto their planets only
-			// var starlight = new THREE.PointLight(0xffffff, 2.0, 600);
-			//			var starlight = new THREE.DirectionalLight(0xffffff, 2.0, 100000);
-			//			starlight.target = planet;
+			// make stars shine onto their planets only
+			var starlight = new THREE.PointLight(0xffffff, 2.0, 200);
+			starlight.castShadow = true;
+			starsystem.add(starlight);
 
 			starsystem.updateMatrix();
 			scene.add( starsystem );
 
+
+			// construct the starsystem with both near starsystem and when at a
+			// larger distance, only the star
 			lod = new THREE.LOD();
 
 			lod.addLevel(staronly, 2000);
 			lod.addLevel(starsystem, 100);
 
 			// TODO move star system to its position in the Galaxy
-			//			lod.position.x = 10000 * ( 0.5 - Math.random() );
-			//		lod.position.y =  7500 * ( 0.5 - Math.random() );
-			//			lod.position.z = 10000 * ( 0.5 - Math.random() );
 			lod.position.x = j * 300;
-
 			lod.updateMatrix();
 
 			// WARNING not sure that this should be set... we want the planets to move in their orbits!
 			lod.matrixAutoUpdate = false;
 
-			// put it into the scene
-			scene.add( lod );
+			scene.add(lod);
 		}
 
 		console.log('...done! ' + pnum + ' planets added.');
@@ -302,11 +330,14 @@
 
 		console.log(elapse + ' seconds.')
 
-		renderer = new THREE.WebGLRenderer( { antialias: true } );
+		renderer = new THREE.WebGLRenderer( { antialias: false } );
 		renderer.setPixelRatio( window.devicePixelRatio );
 		renderer.setSize( window.innerWidth, window.innerHeight );
 		container.appendChild( renderer.domElement );
-		//
+
+//    planets cast shadows onto other planets (caution: slows down everything)
+//		renderer.shadowMap.enabled = true;
+
 		window.addEventListener( 'resize', onWindowResize, false );
 	}
 
