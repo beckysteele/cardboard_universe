@@ -3,6 +3,8 @@
 
 A Github repository for the exoplanet cardboard universe project from #AstroHackWeek 2018
 
+![The Team](https://github.com/beckysteele/cardboard_universe/blob/master/people_ahw2018.jpg)
+
 ## Hack Leaders: 
 - [Matthew Kenworthy](https://github.com/mkenworthy)
 - [Ellie Schwab Abrahams](https://github.com/elliesch)
