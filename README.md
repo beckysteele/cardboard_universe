@@ -1,7 +1,7 @@
 # cardboard_universe
 ![badge-img](https://img.shields.io/badge/Made%20at-%23AstroHackWeek-8063d5.svg?style=flat)
 
-A Github repository for the exoplanet cardboard universe project from #AstroHackWeek 2018
+A Google Cardboard VR experience that explores star systems and their orbiting exoplanets. Will ultimately include actual host star and planets from Kepler.
 
 ![The Team](https://github.com/beckysteele/cardboard_universe/blob/master/people_ahw2018.jpg)
 
@@ -14,3 +14,10 @@ A Github repository for the exoplanet cardboard universe project from #AstroHack
 - [Brigitta Sipocz](https://github.com/bsipocz) (Counter of the Planets)
 - [Yanett Contreras](https://github.com/YanettContreras) (Colourer of the Stars)
 - [Becky Steele](https://github.com/beckysteele/) (Interpreter of the JSON)
+
+## Software/Data Used: 
+- [NASA Exoplanet Archive](https://exoplanetarchive.ipac.caltech.edu/docs/program_interfaces.html)
+- [Three.js](https://threejs.org/)
+- [Python](https://www.python.org/)
+- [Google Cardboard](https://vr.google.com/cardboard/)
+- Github
