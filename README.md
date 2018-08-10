@@ -5,15 +5,12 @@ A Github repository for the exoplanet cardboard universe project from #AstroHack
 
 ![The Team](https://github.com/beckysteele/cardboard_universe/blob/master/people_ahw2018.jpg)
 
-## Hack Leaders: 
-- [Matthew Kenworthy](https://github.com/mkenworthy)
-- [Ellie Schwab Abrahams](https://github.com/elliesch)
-
-## Hack Contributors: 
-- Hack leaders
-- [David Freitas](https://github.com/DavidOsp)
-- [Efşan Sökmen](https://github.com/efskmn)
-- [Stephanie Tumampos](https://github.com/stampmeup)
-- [Brigitta Sipocz](https://github.com/bsipocz)
-- [Yanett Contreras](https://github.com/YanettContreras)
-- [Becky Steele](https://github.com/beckysteele/)
+## Hack Team: 
+- [Matthew Kenworthy](https://github.com/mkenworthy) (Mover of the Planets + Co-Creator of the Hack)
+- [Ellie Schwab Abrahams](https://github.com/elliesch) (Co-Creator of the Hack)
+- [David Freitas](https://github.com/DavidOsp) (Finder of the Galaxy)
+- [Efşan Sökmen](https://github.com/efskmn) (Calculator of the log(P))
+- [Stephanie Tumampos](https://github.com/stampmeup) (Contributor of ideas)
+- [Brigitta Sipocz](https://github.com/bsipocz) (Counter of the Planets)
+- [Yanett Contreras](https://github.com/YanettContreras) (Colourer of the Stars)
+- [Becky Steele](https://github.com/beckysteele/) (Interpreter of the JSON)
