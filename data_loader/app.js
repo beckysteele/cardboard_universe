@@ -1,110 +1,59 @@
-// Call the main function
-init();
+/************************************************************************************* 
+This section opens, parses, and stores the data in exoplanets.json as exoplanet_data
+**************************************************************************************/
 
-function init() {
-    loadExoplanetData(function(response) {
-        // Parse exoplanet data
-        var exoplanet_data = JSON.parse(response);
+var ajax = new XMLHttpRequest();
 
-        // Figure out how many there are
-        var exoplanet_count = Object.keys(exoplanet_data.pl_name).length;
+ajax.open("GET","exoplanets.json",false);
+ajax.send();
 
-        // Loop through them and assign corresponding variables
-        for(var i = 0; i < exoplanet_count; i++){
-            var planet_name = exoplanet_data.pl_name[i];
-            var planet_host_name = exoplanet_data.pl_hostname[i];
-            var planet_orbper = exoplanet_data.pl_orbper[i];
-            var planet_rad = exoplanet_data.pl_radj[i];
-            var planet_orbsmax = exoplanet_data.pl_orbsmax[i];
+var exoplanet_data = JSON.parse(ajax.responseText);
+var exoplanet_count = Object.keys(exoplanet_data.pl_name).length;
 
-            // Convert any "falsey" values (undefined, null, etc) to 0 if detected
-            var planet_eccentricity = exoplanet_data.pl_orbeccen[i] || 0;
-            
-            // Uncomment the line below if you want to see an example use of these vars
-            // console.log("Planet name: " + planet_name + ", Host star name: " + planet_host_name + ", Orbital period: " + planet_orbper + ", Radius: " + planet_rad + ", Orbital maximum: " + planet_orbsmax);
-        }
-    });
+// Uncomment the line below and insert it into a loop to see how you'd turn falsey values to 0's 
+// var planet_eccentricity = exoplanet_data.pl_orbeccen[i] || 0;
 
-    loadHostStarData(function(response){
-        // Parse Host Star data
-        var host_star_data = JSON.parse(response);
+// Uncomment the line below to see how to access objects in the var exoplanet_data
+// console.log(exoplanet_data.pl_hostname[0]);
 
-        // Figure out how many there are
-        var host_star_count = Object.keys(host_star_data.pl_hostname).length;
+/************************************************************************************************ 
+This section opens, parses, and stores the data in exoplanet_hosts.json as exoplanet_host_data
+*************************************************************************************************/
 
-        // Loop through them and assign corresponding variables
-        for(var i = 0; i < host_star_count; i++) {
-            var host_star_name = host_star_data.pl_hostname[i];
-            var host_star_ra = host_star_data.ra[i];
-            var host_star_dec = host_star_data.dec[i];
-            var host_star_dist = host_star_data.st_dist[i];
-            var host_star_teff = host_star_data.st_teff[i];
-            
-            // Uncomment the line below if you want to see an example use of these vars
-            // console.log("Host star name: " + host_star_name + ", ra: " + host_star_ra + ", dec: " + host_star_dec + ", distance (pc): " + host_star_dist + ", effective temperature (K): " + host_star_teff);
-        }
-        });
+ajax = new XMLHttpRequest();
 
-        loadHostStarTemps(function(response){
-            // Parse temperature data
-            var host_star_rgb = JSON.parse(response);
-           
-            // Figure out how many there are
-            var temps_count = Object.keys(host_star_rgb.kelvin_value).length;
+ajax.open("GET","exoplanet_hosts.json",false);
+ajax.send();
 
-            // Loop through them and assign corresponding variables
-            var kelvin_color = [];
-            for(var i = 0; i < temps_count; i++) {
-                var red_color = host_star_rgb.kelvin_value[i].R;
-                var green_color = host_star_rgb.kelvin_value[i].G;
-                var blue_color = host_star_rgb.kelvin_value[i].B;
-                var str_constructor = "rgb(" + red_color + ", " + green_color + ", " + blue_color + ")";
-                kelvin_color.push(str_constructor);
-            }
-            // Uncomment this line to see how you would pass a Kelvin value and get its rgb color back from the kelvin_color array
-            // console.log(kelvin_color[11000]);
-            });    
-   }
+var exoplanet_host_data = JSON.parse(ajax.responseText);
+var exoplanet_host_count = Object.keys(exoplanet_host_data.pl_hostname).length;
 
+// Uncomment the line below to see how to access objects in the var exoplanet_host_data
+// console.log(exoplanet_host_data.pl_hostname[0]);
 
-function loadExoplanetData(callback) {   
+/************************************************************************************************ 
+This section opens, parses, and converts the data in temperatures.json into an array of 
+rgb() values accessible by passing in degrees Kelvin
+*************************************************************************************************/
 
-    // This loads the JSON file by making an HTTP request by opening the file and sending the response back to the calling function
-    var xobj = new XMLHttpRequest();
-        xobj.overrideMimeType("application/json");
-    xobj.open('GET', 'exoplanets.json', true); // exoplanet_hosts.json must exist at the same level as app.js in this example
-    xobj.onreadystatechange = function () {
-          if (xobj.readyState == 4 && xobj.status == "200") {
-            callback(xobj.responseText);
-          }
-    };
-    xobj.send(null);  
- }
+ajax = new XMLHttpRequest();
 
- function loadHostStarData(callback) {   
+ajax.open("GET","temperatures.json",false);
+ajax.send();
 
-    // This loads the JSON file by making an HTTP request by opening the file and sending the response back to the calling function
-    var xobj = new XMLHttpRequest();
-        xobj.overrideMimeType("application/json");
-    xobj.open('GET', 'exoplanet_hosts.json', true); // exoplanet_hosts.json must exist at the same level as app.js in this example
-    xobj.onreadystatechange = function () {
-          if (xobj.readyState == 4 && xobj.status == "200") {
-            callback(xobj.responseText);
-          }
-    };
-    xobj.send(null);  
- }
+var host_star_rgb = JSON.parse(ajax.responseText);
+var temps_count = Object.keys(host_star_rgb.kelvin_value).length;
 
- function loadHostStarTemps(callback) {   
+// Loop through the host_star_rbg list, construct r,g,b, values into str format, and push those 
+// into an array accessible by passing in the degrees Kelvin value
+var kelvin_color = [];
+for(var i = 0; i < temps_count; i++) {
+    var red_color = host_star_rgb.kelvin_value[i].R;
+    var green_color = host_star_rgb.kelvin_value[i].G;
+    var blue_color = host_star_rgb.kelvin_value[i].B;
+    var str_constructor = "rgb(" + red_color + ", " + green_color + ", " + blue_color + ")";
+    kelvin_color.push(str_constructor);
+}
 
-    // This loads the JSON file by making an HTTP request by opening the file and sending the response back to the calling function
-    var xobj = new XMLHttpRequest();
-        xobj.overrideMimeType("application/json");
-    xobj.open('GET', 'temperatures.json', true); // exoplanet_hosts.json must exist at the same level as app.js in this example
-    xobj.onreadystatechange = function () {
-          if (xobj.readyState == 4 && xobj.status == "200") {
-            callback(xobj.responseText);
-          }
-    };
-    xobj.send(null);  
- }
+// Uncomment to see how to access the rgb() value of 10000 degrees Kelvin in the array kelvin_color
+// console.log(kelvin_color[10000]);
