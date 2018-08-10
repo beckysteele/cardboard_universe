@@ -48,6 +48,10 @@
 
     // we want the stereo camera views
     effect = new THREE.StereoEffect(renderer);
+    var use_vr_set = false;
+
+    if (use_vr_set == false) {effect.eyeSep = - effect.eyeSep};
+
 
     // establish the scene
     scene = new THREE.Scene();
@@ -56,8 +60,6 @@
     camera = new THREE.PerspectiveCamera(90, 1, 0.001, 1500000);
     camera.position.set(500, 0, 500);
     scene.add(camera);
-
-    var use_vr_set = true;
 
     if (use_vr_set) {
       console.log('using VR set');
@@ -119,7 +121,7 @@
 
     var pc_to_pixels = 5; // scaling factor to space out the systems correctly
     // for ( j = 0; j < exoplanet_host_count; j++ ) { // loop over all the stars with planets
-    for ( j = 0; j < 30; j++ ) { // loop over all the stars with planets
+    for ( j = 0; j < 100; j++ ) { // loop over all the stars with planets
 
       var host_star_name = exoplanet_host_data.pl_hostname[j];
       var host_star_ra = exoplanet_host_data.ra[j];
@@ -175,7 +177,7 @@
       }
       console.log('for star '+star.name+' we have '+pcount+' planets');
 
-      nplanets = 4;
+      nplanets = 3;
       for (var currp = 1; currp < nplanets; currp++) {
         var planetgeometry = new THREE.SphereBufferGeometry( 1, 8, 8 );
         var planetmaterial = new THREE.MeshLambertMaterial( { color: 0xff0000 } );
