@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en" >
+    <head>
+        <meta charset="utf-8" />
+        <meta name="author" content="Script Tutorials" />
+        <title>WebGL With Three.js - Lesson 5 - spherical skybox and bubble | Script Tutorials</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+        <link href="css/main.css" rel="stylesheet" type="text/css" />
+    </head>
+    <body>
+        <!-- skybox shaders -->
+        <script type="application/x-glsl" id="sky-vertex">
+        varying vec2 vUV;
+
+        void main() {
+          vUV = uv;
+          vec4 pos = vec4(position, 1.0);
+          gl_Position = projectionMatrix * modelViewMatrix * pos;
+        }
+        </script>
+
+        <script type="application/x-glsl" id="sky-fragment">
+        uniform sampler2D texture;
+        varying vec2 vUV;
+
+        void main() {
+          vec4 sample = texture2D(texture, vUV);
+          gl_FragColor = vec4(sample.xyz, sample.w);
+        }
+        </script>
+        <!-- /skybox shaders -->
+
+        <!-- bubble shaders -->
+        <script type="x-shader/x-vertex" id="bubble-vertex">
+        uniform float mRefractionRatio;
+        uniform float mBias;
+        uniform float mScale;
+        uniform float mPower;
+
+        varying vec3 vReflect;
+        varying vec3 vRefract[3];
+        varying float vReflectionFactor;
+
+        void main() {
+
+            vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
+            vec4 worldPosition = modelMatrix * vec4( position, 1.0 );
+
+            vec3 worldNormal = normalize( mat3( modelMatrix[0].xyz, modelMatrix[1].xyz, modelMatrix[2].xyz ) * normal );
+
+            vec3 I = worldPosition.xyz - cameraPosition;
+
+            vReflect = reflect( I, worldNormal );
+            vRefract[0] = refract( normalize( I ), worldNormal, mRefractionRatio );
+            vRefract[1] = refract( normalize( I ), worldNormal, mRefractionRatio * 0.99 );
+            vRefract[2] = refract( normalize( I ), worldNormal, mRefractionRatio * 0.98 );
+            vReflectionFactor = mBias + mScale * pow( 1.0 + dot( normalize( I ), worldNormal ), mPower );
+
+            gl_Position = projectionMatrix * mvPosition;
+        }
+        </script>
+
+        <script type="x-shader/x-fragment" id="bubble-fragment">
+        uniform samplerCube tCube;
+        varying vec3 vReflect;
+        varying vec3 vRefract[3];
+        varying float vReflectionFactor;
+
+        void main() {
+            vec4 reflectedColor = textureCube( tCube, vec3( -vReflect.x, vReflect.yz ) );
+            vec4 refractedColor = vec4( 0.5 );
+
+            refractedColor.r = textureCube( tCube, vec3( -vRefract[0].x, vRefract[0].yz ) ).r;
+            refractedColor.g = textureCube( tCube, vec3( -vRefract[1].x, vRefract[1].yz ) ).g;
+            refractedColor.b = textureCube( tCube, vec3( -vRefract[2].x, vRefract[2].yz ) ).b;
+
+            gl_FragColor = mix( refractedColor, reflectedColor, clamp( vReflectionFactor, 0.0, 1.0 ) );
+        }
+        </script>
+        <!-- /bubble shaders -->
+
+        <script src="js/three.min.js"></script>
+        <script src="js/THREEx.WindowResize.js"></script>
+        <script src="js/OrbitControls.js"></script>
+        <script src="js/stats.min.js"></script>
+        <script src="js/script3.js"></script>
+
+        <div style="position: absolute; top: 10px; left: 20px; text-align: center;"><a href="http://www.script-tutorials.com/webgl-with-three-js-lesson-5/" target="_blank">"WebGL With Three.js - Lesson 5"</a> is prepared by <a href="http://www.script-tutorials.com/" target="_blank">Script Tutorials</a> team.<br>Drag to spin</div>
+    </body>
+</html>
